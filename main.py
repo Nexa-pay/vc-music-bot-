@@ -11,10 +11,18 @@ API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 STRING = os.getenv("STRING")
 
-bot = TelegramClient("bot", API_ID, API_HASH).start(bot_token=BOT_TOKEN)
+bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
-
 vc = PyTgCalls(user)
+
+async def main():
+    await bot.start(bot_token=BOT_TOKEN)
+    await user.start()
+    await vc.start()
+    print("Bot Running")
+    await bot.run_until_disconnected()
+
+asyncio.run(main())
 
 def download(query):
     ydl_opts = {
