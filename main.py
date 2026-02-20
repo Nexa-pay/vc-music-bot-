@@ -1,3 +1,4 @@
+import asyncio
 import os
 import yt_dlp
 from telethon import TelegramClient, events
