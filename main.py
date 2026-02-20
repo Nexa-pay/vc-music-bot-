@@ -33,7 +33,10 @@ def download(query):
 async def play(event):
     file, title = download(event.pattern_match.group(1))
 
-    await vc.join_group_call(event.chat_id, StreamAudio(file))
+    await vc.join_group_call(
+    event.chat_id,
+    InputStream(InputAudioStream(file, HighQualityAudio()))
+)
     await event.reply(f"▶️ Playing: {title}")
 
 
