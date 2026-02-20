@@ -1,5 +1,5 @@
 telethon==1.41.2
 yt-dlp
 tgcrypto
-git+https://github.com/pytgcalls/pytgcalls@master
-git+https://github.com/MarshalX/tgcalls
+py-tgcalls==2.2.11
+ntgcalls==2.1.0
