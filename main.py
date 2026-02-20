@@ -4,7 +4,8 @@ import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from pytgcalls import PyTgCalls
-from pytgcalls.types import MediaStream
+from pytgcalls.types.input_stream import InputAudioStream, InputStream
+from pytgcalls.types.input_stream.quality import HighQualityAudio
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
