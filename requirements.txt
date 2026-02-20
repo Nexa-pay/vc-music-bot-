@@ -1,5 +1,4 @@
 telethon==1.41.2
 yt-dlp
 tgcrypto
-py-tgcalls==2.2.11
-ntgcalls==2.1.0
+pytgcalls==1.0.9
