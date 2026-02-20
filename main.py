@@ -4,7 +4,7 @@ import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from pytgcalls import PyTgCalls
-from pytgcalls.types.stream import StreamAudio
+from pytgcalls.types import MediaStream
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -17,13 +17,12 @@ vc = PyTgCalls(user)
 
 
 def download(query):
-    
     ydl_opts = {
-    "format": "bestaudio[ext=webm]/bestaudio",
-    "quiet": True,
-    "noplaylist": True,
-    "geo_bypass": True,
-}
+        "format": "bestaudio",
+        "outtmpl": "song.%(ext)s",
+        "quiet": True,
+        "noplaylist": True,
+    }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
         return "song.webm", info["title"]
@@ -33,7 +32,7 @@ def download(query):
 async def play(event):
     file, title = download(event.pattern_match.group(1))
 
-    await vc.join_group_call(event.chat_id, StreamAudio(file))
+    await vc.play(event.chat_id, MediaStream(file))
     await event.reply(f"▶️ Playing: {title}")
 
 
