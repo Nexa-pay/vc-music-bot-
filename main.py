@@ -3,8 +3,8 @@ import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from pytgcalls import PyTgCalls
-from pytgcalls.types.input_stream import InputAudioStream, InputStream
-from pytgcalls.types.input_stream.quality import HighQualityAudio
+from pytgcalls.types import MediaStream
+from pytgcalls.types import AudioQuality
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -27,7 +27,7 @@ async def play(event):
     file, title = download(event.pattern_match.group(1))
     await vc.join_group_call(
         event.chat_id,
-        InputStream(InputAudioStream(file, HighQualityAudio()))
+        MediaStream(file, audio_quality=AudioQuality.HIGH)
     )
     await event.reply(f"▶️ Playing: {title}")
 
