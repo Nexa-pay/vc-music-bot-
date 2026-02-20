@@ -1,0 +1,4 @@
+telethon
+pytgcalls
+yt-dlp
+tgcrypto
