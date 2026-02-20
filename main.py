@@ -18,20 +18,18 @@ vc = PyTgCalls(user)
 
 def download(query):
     ydl_opts = {
-        "format": "bestaudio",
         "quiet": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android"],
-                "player_skip": ["webpage", "configs"]
-            }
-        }
+        "skip_download": True,
+        "format": "bestaudio/best",
+        "default_search": "ytsearch1",
+        "extract_flat": True
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch1:{query}", download=False)["entries"][0]
-        return info["url"], info["title"]
+        info = ydl.extract_info(query, download=False)["entries"][0]
 
+    return f"https://www.youtube.com/watch?v={info['id']}", info["title"]
+    
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     url, title = download(event.pattern_match.group(1))
@@ -42,6 +40,7 @@ async def play(event):
     )
 
     await event.reply(f"▶️ Playing: {title}")
+    
 print("Bot Running")
 
 with bot:
