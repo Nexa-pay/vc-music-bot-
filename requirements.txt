@@ -1,4 +1,4 @@
 telethon
-pytgcalls
 yt-dlp
 tgcrypto
+git+https://github.com/pytgcalls/pytgcalls
