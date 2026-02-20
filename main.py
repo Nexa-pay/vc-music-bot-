@@ -28,7 +28,7 @@ async def play(event):
 
     await vc.play(
         event.chat_id,
-        MediaStream(file, audio_quality=AudioQuality.HIGH)
+        MediaStream(file)
     )
 
     await event.reply(f"▶️ Playing: {title}")
