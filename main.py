@@ -30,6 +30,8 @@ def download(query):
 
     return f"https://www.youtube.com/watch?v={info['id']}", info["title"]
     
+from pytgcalls.types import MediaStream
+
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     url, title = download(event.pattern_match.group(1))
