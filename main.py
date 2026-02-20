@@ -17,12 +17,13 @@ vc = PyTgCalls(user)
 
 
 def download(query):
+    
     ydl_opts = {
-        "format": "bestaudio",
-        "outtmpl": "song.%(ext)s",
-        "quiet": True,
-        "noplaylist": True,
-    }
+    "format": "bestaudio[ext=webm]/bestaudio",
+    "quiet": True,
+    "noplaylist": True,
+    "geo_bypass": True,
+}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
         return "song.webm", info["title"]
