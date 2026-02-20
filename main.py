@@ -25,10 +25,14 @@ def download(query):
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     file, title = download(event.pattern_match.group(1))
+
     await vc.join_group_call(
         event.chat_id,
-        InputStream(InputAudioStream(file, HighQualityAudio()))
+        InputStream(
+            InputAudioStream(file, HighQualityAudio())
+        )
     )
+
     await event.reply(f"▶️ Playing: {title}")
 
 async def main():
