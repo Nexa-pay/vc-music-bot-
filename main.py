@@ -3,7 +3,8 @@ import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from pytgcalls import PyTgCalls
-from pytgcalls.types import AudioPiped
+from pytgcalls.types.input_stream import InputAudioStream, InputStream
+from pytgcalls.types.input_stream.quality import HighQualityAudio
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -24,7 +25,10 @@ def download(query):
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     file, title = download(event.pattern_match.group(1))
-    await vc.join_group_call(event.chat_id, AudioPiped(file))
+    await vc.join_group_call(
+        event.chat_id,
+        InputStream(InputAudioStream(file, HighQualityAudio()))
+    )
     await event.reply(f"▶️ Playing: {title}")
 
 print("Bot Running")
