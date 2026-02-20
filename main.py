@@ -20,7 +20,12 @@ def download(query):
     ydl_opts = {
         "format": "bestaudio",
         "quiet": True,
-        "noplaylist": True
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android"],
+                "player_skip": ["webpage", "configs"]
+            }
+        }
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
