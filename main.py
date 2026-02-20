@@ -17,18 +17,23 @@ user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
 vc = PyTgCalls(user)
 
 def download(query):
-    ydl_opts = {"format": "bestaudio", "outtmpl": "song.%(ext)s", "quiet": True}
+    ydl_opts = {
+        "format": "bestaudio",
+        "quiet": True,
+        "noplaylist": True
+    }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch:{query}", download=True)["entries"][0]
-        return "song.webm", info["title"]
+        info = ydl.extract_info(f"ytsearch1:{query}", download=False)["entries"][0]
+        return info["url"], info["title"]
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
-    file, title = download(event.pattern_match.group(1))
+    url, title = download(event.pattern_match.group(1))
 
     await vc.play(
         event.chat_id,
-        MediaStream(file)
+        MediaStream(url)
     )
 
     await event.reply(f"▶️ Playing: {title}")
