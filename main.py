@@ -8,7 +8,7 @@ from pytgcalls.types import MediaStream
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-STRING = os.getenv("STRING")
+STRING = os.getenv("STRING"))
 
 bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 user = Client("user", api_id=API_ID, api_hash=API_HASH, session_string=STRING)
@@ -70,8 +70,6 @@ async def main():
     await user.start()
     await vc.start()
     print("Bot Running")
-    await asyncio.gather(
-        bot.idle(),
-    )
+    await asyncio.gather(bot.idle())
 
 asyncio.run(main())
