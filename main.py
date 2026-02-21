@@ -45,7 +45,6 @@ def download(query):
         info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
         return "song.mp3", info["title"]
 
-
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     query = event.pattern_match.group(1)
