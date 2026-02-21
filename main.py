@@ -21,8 +21,13 @@ def download(query):
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
         "quiet": True,
-        "cookiefile": "cookies.txt",
-        "extractor_args": {"youtube": {"js_runtimes": ["nodejs"]}},
+        "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
+        "extractor_args": {
+            "youtube": {
+                "js_runtimes": ["nodejs"],
+                "player_client": ["android"],   # ✅ Android client bypasses bot check
+            }
+        },
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
