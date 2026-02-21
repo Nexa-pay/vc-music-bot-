@@ -21,57 +21,53 @@ async def search_and_download(query):
         if f.endswith(".mp3") or f.endswith(".m4a"):
             os.remove(f)
 
-    apis = [
-        "https://saavn.dev/api/search/songs",
-        "https://jiosaavn-api-privatecvc2.vercel.app/search/songs",
-    ]
+    async with httpx.AsyncClient(timeout=20) as client:
+        # Search
+        r = await client.get(
+            "https://saavn.dev/api/search/songs",
+            params={"query": query, "limit": 1}
+        )
+        data = r.json()
+        print("FULL RESPONSE:", data)
 
-    song = None
-    async with httpx.AsyncClient(timeout=15) as client:
-        for api in apis:
-            try:
-                r = await client.get(api, params={"query": query, "limit": 1})
-                data = r.json()
-                print("API response:", data)  # debug
-                song = data["data"]["results"][0]
-                break
-            except Exception as e:
-                print("API failed:", e)
-                continue
+        results = data.get("data", {}).get("results", [])
+        if not results:
+            raise Exception("No results found for: " + query)
 
-    if not song:
-        raise Exception("All JioSaavn APIs failed")
+        song = results[0]
+        print("SONG KEYS:", list(song.keys()))
 
-    # Safely extract title and artist
-    title = song.get("name", query)
-    try:
-        artist = song["artists"]["primary"][0]["name"]
-    except (KeyError, IndexError, TypeError):
-        try:
-            artist = song["primaryArtists"]
-        except KeyError:
-            artist = "Unknown"
-    
-    full_title = title + " - " + artist
+        title = song.get("name", query)
 
-    # Get download URL
-    try:
-        download_url = song["downloadUrl"][-1]["url"]
-    except (KeyError, IndexError, TypeError):
-        try:
-            download_url = song["media_url"]
-        except KeyError:
-            raise Exception("No download URL found in response")
+        # Print all possible url fields
+        for key in song:
+            if "url" in key.lower() or "download" in key.lower() or "media" in key.lower():
+                print("URL FIELD:", key, "=", song[key])
 
-    print("Downloading:", full_title)
-    print("URL:", download_url)
+        # Try every possible download field
+        download_url = None
+        if "downloadUrl" in song and song["downloadUrl"]:
+            urls = song["downloadUrl"]
+            print("downloadUrl field:", urls)
+            if isinstance(urls, list):
+                download_url = urls[-1].get("url") or urls[-1].get("link")
+            elif isinstance(urls, str):
+                download_url = urls
 
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-        r = await client.get(download_url)
+        if not download_url and "url" in song:
+            download_url = song["url"]
+
+        if not download_url:
+            raise Exception("Dump: " + str(song))
+
+        print("Downloading from:", download_url)
+
+        # Download audio
+        r = await client.get(download_url, follow_redirects=True, timeout=60)
         with open("song.m4a", "wb") as f:
             f.write(r.content)
 
-    return "song.m4a", full_title
+    return "song.m4a", title
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
