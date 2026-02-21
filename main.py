@@ -33,7 +33,7 @@ def download(query):
         "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android_vr", "android_music"],
+                "player_client": ["android_vr"],  # only supported client
             }
         },
         "postprocessors": [{
@@ -44,6 +44,7 @@ def download(query):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
         return "song.mp3", info["title"]
+
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
