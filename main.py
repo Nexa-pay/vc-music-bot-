@@ -1,5 +1,3 @@
-print("COOKIES_B64 set:", bool(os.getenv("COOKIES_B64")))
-print("cookies.txt exists:", os.path.exists("cookies.txt"))
 import asyncio
 import os
 import base64
@@ -10,7 +8,6 @@ from telethon.errors import FloodWaitError
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 
-# Debug lines - check env and cookies
 print("COOKIES_B64 set:", bool(os.getenv("COOKIES_B64")))
 print("cookies.txt exists:", os.path.exists("cookies.txt"))
 
