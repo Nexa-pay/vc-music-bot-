@@ -1,4 +1,5 @@
 import os
+print("cookies.txt exists:", os.path.exists("cookies.txt"))
 import asyncio
 import yt_dlp
 from telethon import TelegramClient, events
