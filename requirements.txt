@@ -1,5 +1,5 @@
 telethon==1.41.2
 tgcrypto
-yt-dlp
+spotdl
 ntgcalls==2.1.0
 py-tgcalls==2.2.11
