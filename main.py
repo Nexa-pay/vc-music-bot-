@@ -1,9 +1,9 @@
-import os
-print("cookies.txt exists:", os.path.exists("cookies.txt"))
 import asyncio
+import os
 import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
+from telethon.errors import FloodWaitError
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 
@@ -20,11 +20,10 @@ def download(query):
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
-        "quiet": False,
-        "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
+        "quiet": True,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android_vr"],  # ✅ VR client skips JS challenges
+                "player_client": ["android_vr", "android_music"],
             }
         },
         "postprocessors": [{
@@ -41,10 +40,8 @@ async def play(event):
     query = event.pattern_match.group(1)
     await event.reply("⏳ Searching...")
     try:
-        # ✅ Run blocking download in thread executor to avoid loop conflict
         loop = asyncio.get_event_loop()
         file, title = await loop.run_in_executor(None, download, query)
-
         await vc.play(event.chat_id, MediaStream(file))
         await event.reply(f"▶️ Playing: **{title}**")
     except Exception as e:
@@ -58,16 +55,16 @@ async def stop(event):
     except Exception as e:
         await event.reply(f"❌ {e}")
 
-@bot.on(events.NewMessage(pattern=r"/skip"))
-async def skip(event):
-    try:
-        await vc.leave_group_call(event.chat_id)
-        await event.reply("⏭️ Skipped.")
-    except Exception as e:
-        await event.reply(f"❌ {e}")
-
 async def main():
-    await bot.start(bot_token=BOT_TOKEN)
+    # ✅ Handle flood wait on startup instead of crashing
+    while True:
+        try:
+            await bot.start(bot_token=BOT_TOKEN)
+            break
+        except FloodWaitError as e:
+            print(f"⏳ FloodWait: sleeping {e.seconds} seconds...")
+            await asyncio.sleep(e.seconds)
+
     await user.start()
     await vc.start()
     print("✅ Bot Running")
