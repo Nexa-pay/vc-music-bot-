@@ -1,4 +1,4 @@
-pyrogram==2.0.106
+pyrofork
 tgcrypto
 httpx
 ntgcalls==2.1.0
