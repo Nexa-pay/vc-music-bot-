@@ -1,8 +1,6 @@
 import asyncio
 import os
-import base64
 import httpx
-import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
@@ -18,43 +16,51 @@ bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
 vc = PyTgCalls(user)
 
-async def search_jiosaavn(query):
-    url = "https://saavn.dev/api/search/songs"
-    async with httpx.AsyncClient() as client:
-        r = await client.get(url, params={"query": query, "limit": 1})
-        data = r.json()
-        song = data["data"]["results"][0]
-        title = song["name"] + " - " + song["artists"]["primary"][0]["name"]
-        # Get highest quality download URL
-        download_url = song["downloadUrl"][-1]["url"]
-        return title, download_url
-
-def download_direct(url, title):
+async def search_and_download(query):
     for f in os.listdir("."):
-        if f.endswith(".mp3"):
+        if f.endswith(".mp3") or f.endswith(".m4a"):
             os.remove(f)
 
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": "song.%(ext)s",
-        "quiet": True,
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-        }],
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-    return "song.mp3"
+    # Try multiple JioSaavn API mirrors
+    apis = [
+        "https://saavn.dev/api/search/songs",
+        "https://jiosaavn-api-privatecvc2.vercel.app/search/songs",
+    ]
+
+    song = None
+    async with httpx.AsyncClient(timeout=15) as client:
+        for api in apis:
+            try:
+                r = await client.get(api, params={"query": query, "limit": 1})
+                data = r.json()
+                song = data["data"]["results"][0]
+                break
+            except Exception:
+                continue
+
+    if not song:
+        raise Exception("All JioSaavn APIs failed")
+
+    title = song["name"] + " - " + song["artists"]["primary"][0]["name"]
+    download_url = song["downloadUrl"][-1]["url"]  # highest quality
+
+    # Download the file directly
+    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
+        r = await client.get(download_url)
+        with open("song.m4a", "wb") as f:
+            f.write(r.content)
+
+    return "song.m4a", title
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     query = event.pattern_match.group(1)
-    await event.reply("Searching JioSaavn...")
+    await event.reply("Searching...")
     try:
-        title, url = await search_jiosaavn(query)
         loop = asyncio.get_event_loop()
-        file = await loop.run_in_executor(None, download_direct, url, title)
+        file, title = await loop.run_in_executor(
+            None, lambda: asyncio.run(search_and_download(query))
+        )
         await vc.play(event.chat_id, MediaStream(file))
         await event.reply("Playing: " + title)
     except Exception as e:
