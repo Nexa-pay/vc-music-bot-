@@ -20,7 +20,8 @@ def download(query):
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
         "quiet": True,
-        "extractor_args": {"youtube": {"js_runtimes": ["nodejs"]}},  # ✅ add this
+        "cookiefile": "cookies.txt",              # ✅ Add this
+        "extractor_args": {"youtube": {"js_runtimes": ["nodejs"]}},
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -29,7 +30,6 @@ def download(query):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
         return "song.mp3", info["title"]
-
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
