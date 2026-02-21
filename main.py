@@ -1,7 +1,8 @@
 import asyncio
 import os
-import subprocess
 import base64
+import httpx
+import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
@@ -17,35 +18,43 @@ bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
 vc = PyTgCalls(user)
 
-def download(query):
-    # Clean up old file
+async def search_jiosaavn(query):
+    url = "https://saavn.dev/api/search/songs"
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, params={"query": query, "limit": 1})
+        data = r.json()
+        song = data["data"]["results"][0]
+        title = song["name"] + " - " + song["artists"]["primary"][0]["name"]
+        # Get highest quality download URL
+        download_url = song["downloadUrl"][-1]["url"]
+        return title, download_url
+
+def download_direct(url, title):
     for f in os.listdir("."):
         if f.endswith(".mp3"):
             os.remove(f)
 
-    result = subprocess.run(
-        ["spotdl", query, "--output", "song.mp3", "--format", "mp3"],
-        capture_output=True,
-        text=True
-    )
-
-    if result.returncode != 0:
-        raise Exception("spotdl failed: " + result.stderr)
-
-    # Find the downloaded file
-    for f in os.listdir("."):
-        if f.endswith(".mp3"):
-            return f, f.replace(".mp3", "")
-
-    raise Exception("No mp3 file found after download")
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "outtmpl": "song.%(ext)s",
+        "quiet": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+        }],
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    return "song.mp3"
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     query = event.pattern_match.group(1)
-    await event.reply("Searching Spotify...")
+    await event.reply("Searching JioSaavn...")
     try:
+        title, url = await search_jiosaavn(query)
         loop = asyncio.get_event_loop()
-        file, title = await loop.run_in_executor(None, download, query)
+        file = await loop.run_in_executor(None, download_direct, url, title)
         await vc.play(event.chat_id, MediaStream(file))
         await event.reply("Playing: " + title)
     except Exception as e:
