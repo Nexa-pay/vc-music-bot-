@@ -21,7 +21,6 @@ async def search_and_download(query):
         if f.endswith(".mp3") or f.endswith(".m4a"):
             os.remove(f)
 
-    # Try multiple JioSaavn API mirrors
     apis = [
         "https://saavn.dev/api/search/songs",
         "https://jiosaavn-api-privatecvc2.vercel.app/search/songs",
@@ -33,34 +32,53 @@ async def search_and_download(query):
             try:
                 r = await client.get(api, params={"query": query, "limit": 1})
                 data = r.json()
+                print("API response:", data)  # debug
                 song = data["data"]["results"][0]
                 break
-            except Exception:
+            except Exception as e:
+                print("API failed:", e)
                 continue
 
     if not song:
         raise Exception("All JioSaavn APIs failed")
 
-    title = song["name"] + " - " + song["artists"]["primary"][0]["name"]
-    download_url = song["downloadUrl"][-1]["url"]  # highest quality
+    # Safely extract title and artist
+    title = song.get("name", query)
+    try:
+        artist = song["artists"]["primary"][0]["name"]
+    except (KeyError, IndexError, TypeError):
+        try:
+            artist = song["primaryArtists"]
+        except KeyError:
+            artist = "Unknown"
+    
+    full_title = title + " - " + artist
 
-    # Download the file directly
+    # Get download URL
+    try:
+        download_url = song["downloadUrl"][-1]["url"]
+    except (KeyError, IndexError, TypeError):
+        try:
+            download_url = song["media_url"]
+        except KeyError:
+            raise Exception("No download URL found in response")
+
+    print("Downloading:", full_title)
+    print("URL:", download_url)
+
     async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
         r = await client.get(download_url)
         with open("song.m4a", "wb") as f:
             f.write(r.content)
 
-    return "song.m4a", title
+    return "song.m4a", full_title
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     query = event.pattern_match.group(1)
     await event.reply("Searching...")
     try:
-        loop = asyncio.get_event_loop()
-        file, title = await loop.run_in_executor(
-            None, lambda: asyncio.run(search_and_download(query))
-        )
+        file, title = await search_and_download(query)
         await vc.play(event.chat_id, MediaStream(file))
         await event.reply("Playing: " + title)
     except Exception as e:
