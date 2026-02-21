@@ -20,11 +20,11 @@ def download(query):
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
-        "quiet": True,
-        "default_search": "https://music.youtube.com/search?q=",  # YT Music instead
+        "quiet": False,
+        "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "web"],
+                "player_client": ["android_vr"],  # ✅ VR client skips JS challenges
             }
         },
         "postprocessors": [{
