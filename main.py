@@ -1,3 +1,5 @@
+print("COOKIES_B64 set:", bool(os.getenv("COOKIES_B64")))
+print("cookies.txt exists:", os.path.exists("cookies.txt"))
 import asyncio
 import os
 import base64
