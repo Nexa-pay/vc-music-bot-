@@ -11,9 +11,6 @@ COPY requirements.txt .
 RUN pip install --upgrade pip wheel setuptools
 RUN pip install -r requirements.txt
 
-# ✅ Pre-download yt-dlp EJS remote components at build time
-RUN yt-dlp --allow-unplayable-formats --remote-components ejs:github || true
-
 COPY . .
 
 CMD ["python", "main.py"]
