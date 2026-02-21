@@ -1,57 +1,48 @@
 import asyncio
 import os
+import subprocess
 import base64
-import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import FloodWaitError
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 
-print("COOKIES_B64 set:", bool(os.getenv("COOKIES_B64")))
-print("cookies.txt exists:", os.path.exists("cookies.txt"))
-
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 STRING = os.getenv("STRING")
-
-cookies_b64 = os.getenv("COOKIES_B64")
-if cookies_b64:
-    with open("cookies.txt", "wb") as f:
-        f.write(base64.b64decode(cookies_b64))
-    print("cookies.txt written successfully")
-else:
-    print("No cookies - YouTube will block downloads")
 
 bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
 vc = PyTgCalls(user)
 
 def download(query):
-    ydl_opts = {
-        "format": "bestaudio/best",
-        "outtmpl": "song.%(ext)s",
-        "quiet": True,
-        "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android_vr"],
-            }
-        },
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-        }],
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(f"ytsearch1:{query}", download=True)["entries"][0]
-        return "song.mp3", info["title"]
+    # Clean up old file
+    for f in os.listdir("."):
+        if f.endswith(".mp3"):
+            os.remove(f)
+
+    result = subprocess.run(
+        ["spotdl", query, "--output", "song.mp3", "--format", "mp3"],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        raise Exception("spotdl failed: " + result.stderr)
+
+    # Find the downloaded file
+    for f in os.listdir("."):
+        if f.endswith(".mp3"):
+            return f, f.replace(".mp3", "")
+
+    raise Exception("No mp3 file found after download")
 
 @bot.on(events.NewMessage(pattern=r"/play (.+)"))
 async def play(event):
     query = event.pattern_match.group(1)
-    await event.reply("Searching...")
+    await event.reply("Searching Spotify...")
     try:
         loop = asyncio.get_event_loop()
         file, title = await loop.run_in_executor(None, download, query)
