@@ -21,11 +21,10 @@ def download(query):
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
         "quiet": True,
-        "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
+        "default_search": "https://music.youtube.com/search?q=",  # YT Music instead
         "extractor_args": {
             "youtube": {
-                "js_runtimes": ["nodejs"],
-                "player_client": ["android"],   # ✅ Android client bypasses bot check
+                "player_client": ["android", "web"],
             }
         },
         "postprocessors": [{
