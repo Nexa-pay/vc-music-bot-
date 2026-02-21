@@ -16,35 +16,30 @@ bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
 vc = PyTgCalls(user)
 
-async def search_and_download(query):
+# ✅ Fully synchronous - no async, no asyncio.run() inside
+def download(query):
     for f in os.listdir("."):
         if f.endswith(".mp3") or f.endswith(".m4a"):
             os.remove(f)
 
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-        # Search Deezer public API - no auth needed
-        r = await client.get(
+    with httpx.Client(timeout=30, follow_redirects=True) as client:
+        r = client.get(
             "https://api.deezer.com/search",
             params={"q": query, "limit": 1}
         )
         data = r.json()
-        print("Deezer response:", data)
-
         tracks = data.get("data", [])
         if not tracks:
             raise Exception("No results found for: " + query)
 
         track = tracks[0]
         title = track["title"] + " - " + track["artist"]["name"]
-        preview_url = track.get("preview")  # 30 second MP3 preview, always free
+        preview_url = track.get("preview")
 
         if not preview_url:
-            raise Exception("No preview URL in track: " + str(track))
+            raise Exception("No preview URL found")
 
-        print("Title:", title)
-        print("Preview URL:", preview_url)
-
-        r = await client.get(preview_url, timeout=60)
+        r = client.get(preview_url, timeout=60)
         with open("song.mp3", "wb") as f:
             f.write(r.content)
 
@@ -55,7 +50,9 @@ async def play(event):
     query = event.pattern_match.group(1)
     await event.reply("Searching...")
     try:
-        file, title = await search_and_download(query)
+        # ✅ run_in_executor with plain sync function - no nested asyncio
+        loop = asyncio.get_event_loop()
+        file, title = await loop.run_in_executor(None, download, query)
         await vc.play(event.chat_id, MediaStream(file))
         await event.reply("Playing: " + title)
     except Exception as e:
