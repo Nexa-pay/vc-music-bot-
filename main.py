@@ -3,8 +3,8 @@ import asyncio
 import yt_dlp
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-from pytgcalls import PyTgCalls, idle
-from pytgcalls.types import MediaStream          # ✅ Correct for v2.2+
+from pytgcalls import PyTgCalls
+from pytgcalls.types import MediaStream
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -20,7 +20,7 @@ def download(query):
         "format": "bestaudio/best",
         "outtmpl": "song.%(ext)s",
         "quiet": True,
-        "cookiefile": "cookies.txt",              # ✅ Add this
+        "cookiefile": "cookies.txt",
         "extractor_args": {"youtube": {"js_runtimes": ["nodejs"]}},
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
@@ -36,11 +36,11 @@ async def play(event):
     query = event.pattern_match.group(1)
     await event.reply("⏳ Searching...")
     try:
-        file, title = download(query)
-        await vc.play(                           # ✅ v2.2+ uses play(), not join_group_call()
-            event.chat_id,
-            MediaStream(file),                   # ✅ MediaStream replaces AudioPiped
-        )
+        # ✅ Run blocking download in thread executor to avoid loop conflict
+        loop = asyncio.get_event_loop()
+        file, title = await loop.run_in_executor(None, download, query)
+
+        await vc.play(event.chat_id, MediaStream(file))
         await event.reply(f"▶️ Playing: **{title}**")
     except Exception as e:
         await event.reply(f"❌ Error: {e}")
@@ -50,6 +50,14 @@ async def stop(event):
     try:
         await vc.leave_group_call(event.chat_id)
         await event.reply("⏹️ Stopped.")
+    except Exception as e:
+        await event.reply(f"❌ {e}")
+
+@bot.on(events.NewMessage(pattern=r"/skip"))
+async def skip(event):
+    try:
+        await vc.leave_group_call(event.chat_id)
+        await event.reply("⏭️ Skipped.")
     except Exception as e:
         await event.reply(f"❌ {e}")
 
