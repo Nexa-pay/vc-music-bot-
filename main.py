@@ -9,7 +9,7 @@ from pytgcalls.types import AudioPiped, AudioParameters   # ✅ Fixed import
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-STRING = os.getenv("STRING"))
+STRING = os.getenv("STRING")
 
 bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
