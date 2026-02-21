@@ -10,6 +10,10 @@ from telethon.errors import FloodWaitError
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 
+# Debug lines - check env and cookies
+print("COOKIES_B64 set:", bool(os.getenv("COOKIES_B64")))
+print("cookies.txt exists:", os.path.exists("cookies.txt"))
+
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -19,9 +23,9 @@ cookies_b64 = os.getenv("COOKIES_B64")
 if cookies_b64:
     with open("cookies.txt", "wb") as f:
         f.write(base64.b64decode(cookies_b64))
-    print("cookies.txt written from env")
+    print("cookies.txt written successfully")
 else:
-    print("No COOKIES_B64 env var found")
+    print("No cookies - YouTube will block downloads")
 
 bot = TelegramClient("bot", API_ID, API_HASH)
 user = TelegramClient(StringSession(STRING), API_ID, API_HASH)
@@ -35,7 +39,7 @@ def download(query):
         "cookiefile": "cookies.txt" if os.path.exists("cookies.txt") else None,
         "extractor_args": {
             "youtube": {
-                "player_client": ["android_vr"],  # only supported client
+                "player_client": ["android_vr"],
             }
         },
         "postprocessors": [{
@@ -73,7 +77,7 @@ async def main():
             await bot.start(bot_token=BOT_TOKEN)
             break
         except FloodWaitError as e:
-            print("FloodWait: waiting " + str(e.seconds) + "s before retry...")
+            print("FloodWait: waiting " + str(e.seconds) + "s...")
             await asyncio.sleep(e.seconds + 5)
 
     await user.start()
